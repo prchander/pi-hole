@@ -176,7 +176,7 @@ database_table_from_file() {
         echo "${rowid},\"${domain}\",${timestamp}" >> "${tmpFile}"
       elif [[ "${table}" == "adlist" ]]; then
         # Adlist table format
-        echo "${rowid},\"${domain}\",1,${timestamp},${timestamp},\"Migrated from ${source}\"" >> "${tmpFile}"
+        echo "${rowid},\"${domain}\",1,${timestamp},${timestamp},\"Migrated from ${source}\"," >> "${tmpFile}"
       else
         # White-, black-, and regexlist table format
         echo "${rowid},${type},\"${domain}\",1,${timestamp},${timestamp},\"Migrated from ${source}\"" >> "${tmpFile}"
@@ -393,10 +393,15 @@ gravity_DownloadBlocklists() {
     esac
 
     echo -e "  ${INFO} Target: ${url}"
-    local regex
+    local regex check_url
     # Check for characters NOT allowed in URLs
     regex="[^a-zA-Z0-9:/?&%=~._()-;]"
-    if [[ "${url}" =~ ${regex} ]]; then
+
+    # this will remove first @ that is after schema and before domain
+    # \1 is optional schema, \2 is userinfo
+    check_url="$( sed -re 's#([^:/]*://)?([^/]+)@#\1\2#' <<< "$url" )"
+
+    if [[ "${check_url}" =~ ${regex} ]]; then
         echo -e "  ${CROSS} Invalid Target"
     else
        gravity_DownloadBlocklistFromUrl "${url}" "${cmd_ext}" "${agent}" "${sourceIDs[$i]}" "${saveLocation}" "${target}" "${compression}"
